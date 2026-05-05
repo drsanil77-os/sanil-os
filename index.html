@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Dr. Sanil OS"/>
+<title>Dr. Sanil OS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+html,body,#root{height:100%;background:#F0EDE8;}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#E8E4DF}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
+input,select,textarea{font-family:'IBM Plex Sans',sans-serif;}
+button{transition:all 0.15s ease;font-family:'IBM Plex Sans',sans-serif;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// ─── LIGHT THEME TOKENS ───────────────────────────────────────
+const C = {
+  // Brand
+  gold:"#A0732A",    goldL:"#C49040",   goldD:"rgba(160,115,42,0.10)",
+  // Backgrounds
+  bg:"#F0EDE8",      card:"#FFFFFF",    card2:"#F8F6F3",
+  // Borders
+  border:"#E2DDD8",  border2:"#C8C2BA",
+  // Text
+  text:"#1A1614",    dim:"#7A7068",     dim2:"#5A5048",
+  // Status colors — vivid for visibility
+  green:"#0D7A4E",   red:"#C0392B",     blue:"#1A5FA8",
+  purple:"#6B3FA0",  pink:"#B5306A",    orange:"#C45E0A",
+  // Soft tints for backgrounds
+  greenBg:"#EAF7F2", redBg:"#FDECEA",   blueBg:"#EAF1FB",
+  purpleBg:"#F3EEFB",pinkBg:"#FCEBf3",  orangeBg:"#FEF3E8",
+};
+
+const HOSP_CATS = [
+  {id:"meetings",label:"Meetings",icon:"🗓",color:C.blue},
+  {id:"actions",label:"Actions",icon:"✅",color:C.gold},
+  {id:"red",label:"Red Flags",icon:"🔴",color:C.red},
+  {id:"kpi",label:"KPIs",icon:"📊",color:C.purple},
+  {id:"governance",label:"Governance",icon:"⚖️",color:C.orange},
+  {id:"others",label:"Others",icon:"📌",color:C.dim},
+];
+const BUSINESSES = [
+  {id:"skewers",name:"The Skewers",sub:"Korean BBQ · Abu Dhabi",icon:"🔥",color:C.orange},
+  {id:"annyeong",name:"Annyeong Spa",sub:"Korean Spa · Al Ain",icon:"🌸",color:C.pink},
+  {id:"seafield",name:"Seafield Rehab",sub:"Rehabilitation · Kerala",icon:"🏥",color:C.blue},
+  {id:"orthonexa",name:"Orthonexa",sub:"Innovations · Biolife Park",icon:"🦾",color:C.purple},
+  {id:"orthoplus",name:"Orthoplus Clinic",sub:"Orthopaedics · Al Ain",icon:"🦴",color:C.gold},
+];
+const BIZ_CATS = [
+  {id:"revenue",label:"Revenue",icon:"💹",color:C.green},
+  {id:"operations",label:"Operations",icon:"⚙️",color:C.blue},
+  {id:"staff",label:"Staff",icon:"👥",color:C.purple},
+  {id:"actions",label:"Actions",icon:"✅",color:C.gold},
+  {id:"issues",label:"Issues",icon:"🔴",color:C.red},
+];
+const FIN_CATS = [
+  {id:"income",label:"Income",icon:"💵",color:C.green},
+  {id:"expenses",label:"Expenses",icon:"💸",color:C.red},
+  {id:"biz",label:"Biz Revenue",icon:"📈",color:C.gold},
+  {id:"goals",label:"Goals",icon:"🎯",color:C.purple},
+];
+const PERS_CATS = [
+  {id:"family",label:"Family",icon:"👨‍👩‍👧",color:C.pink},
+  {id:"cornell",label:"Cornell",icon:"🎓",color:C.red},
+  {id:"hobbies",label:"Hobbies",icon:"🎧",color:C.purple},
+  {id:"scorecard",label:"Scorecard",icon:"⭐",color:C.gold},
+];
+const DAY_CATS = [
+  {id:"hospital",label:"Hospital",icon:"🏥",color:C.blue},
+  {id:"business",label:"Business",icon:"💼",color:C.gold},
+  {id:"orthoplus",label:"Orthoplus",icon:"🦴",color:C.purple},
+  {id:"cornell",label:"Cornell",icon:"🎓",color:C.red},
+  {id:"personal",label:"Personal",icon:"👤",color:C.green},
+];
+const LIFE_AREAS = ["Health","Finance","Family","Career","Hospital","Business","Cornell","Hobbies","Sleep","Mindset"];
+const FIXED_SCHED = [
+  {time:"09:15",end:"09:30",label:"Morning Huddle",sub:"Director · PSQ · Nursing",color:C.blue,bg:C.blueBg},
+  {time:"09:30",end:"14:00",label:"Core Team + Governance",sub:"Dept heads · Meetings · Clinical",color:C.blue,bg:C.blueBg},
+  {time:"14:00",end:"17:00",label:"Lunch + Rest",sub:"Protected — do not book",color:C.green,bg:C.greenBg},
+  {time:"17:00",end:"21:00",label:"Orthoplus Clinic",sub:"Surgery · Consults",color:C.gold,bg:C.goldD},
+];
+const NAV_ITEMS = [
+  {id:"home",icon:"⬡",label:"Home"},
+  {id:"day",icon:"📅",label:"Day"},
+  {id:"hospital",icon:"🏥",label:"Hospital"},
+  {id:"business",icon:"💼",label:"Business"},
+  {id:"finance",icon:"💰",label:"Finance"},
+  {id:"personal",icon:"👤",label:"Personal"},
+];
+
+// ─── STORAGE ──────────────────────────────────────────────────
+function dKey(){const d=new Date();return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;}
+function sGet(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}}
+function sSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+function useItems(key){
+  const [items,setItems]=useState(()=>{const d=sGet(key);return Array.isArray(d)?d:[];});
+  function save(arr){setItems(arr);sSet(key,arr);}
+  function addItem(item){save([{...item,id:Date.now(),done:false},...items]);}
+  function toggleItem(id){save(items.map(i=>i.id===id?{...i,done:!i.done}:i));}
+  function deleteItem(id){save(items.filter(i=>i.id!==id));}
+  return {items,addItem,toggleItem,deleteItem};
+}
+
+// ─── STYLE HELPERS ────────────────────────────────────────────
+const mono=(sz=10,col=C.gold)=>({fontFamily:"'IBM Plex Mono'",fontSize:sz,color:col,letterSpacing:1.2});
+const sans=(sz=13,col=C.text,wt=400)=>({fontFamily:"'IBM Plex Sans'",fontSize:sz,color:col,fontWeight:wt});
+const play=(sz=20)=>({fontFamily:"'Playfair Display'",fontSize:sz,fontWeight:700,color:C.text});
+
+function Chip({label,color=C.gold,bg,size=9}){
+  const bg2=bg||(color+"18");
+  return <span style={{...mono(size,color),background:bg2,border:`1.5px solid ${color}`,borderRadius:5,padding:"2px 7px",whiteSpace:"nowrap",display:"inline-block",fontWeight:500}}>{label}</span>;
+}
+
+function SectionHead({icon,title,color=C.gold}){
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+      <span style={{fontSize:16}}>{icon}</span>
+      <span style={{...mono(11,color),fontWeight:500}}>{title}</span>
+      <div style={{flex:1,height:1.5,background:C.border}}/>
+    </div>
+  );
+}
+
+function Card({children,style={}}){
+  return <div style={{background:C.card,border:`1.5px solid ${C.border}`,borderRadius:16,padding:18,boxShadow:"0 1px 4px rgba(0,0,0,0.06)",...style}}>{children}</div>;
+}
+
+function ScrollTabs({cats,active,onSelect}){
+  return(
+    <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:6,marginBottom:18,scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
+      {cats.map(c=>(
+        <button key={c.id} onClick={()=>onSelect(c.id)} style={{
+          padding:"8px 14px",borderRadius:20,
+          border:`1.5px solid ${active===c.id?c.color:C.border}`,
+          background:active===c.id?c.color+"15":C.card,
+          cursor:"pointer",...sans(12,active===c.id?c.color:C.dim,active===c.id?600:400),
+          whiteSpace:"nowrap",flexShrink:0,boxShadow:active===c.id?"none":"0 1px 3px rgba(0,0,0,0.06)",
+        }}>{c.icon} {c.label}</button>
+      ))}
+    </div>
+  );
+}
+
+function ItemRow({item,onToggle,onDelete}){
+  const prioColor=item.priority==="urgent"?C.red:item.priority==="high"?C.orange:C.border;
+  return(
+    <div style={{
+      display:"flex",gap:10,alignItems:"flex-start",padding:"13px 14px",
+      background:item.priority==="urgent"?C.redBg:C.card2,borderRadius:12,marginBottom:8,
+      border:`1.5px solid ${prioColor}`,
+      opacity:item.done?0.55:1,
+    }}>
+      <div onClick={()=>onToggle(item.id)} style={{
+        width:22,height:22,borderRadius:6,flexShrink:0,marginTop:1,
+        border:`2px solid ${item.done?C.green:C.border2}`,
+        background:item.done?C.green:"#FFF",
+        display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",minWidth:22,
+      }}>
+        {item.done&&<span style={{color:"#FFF",fontSize:13,fontWeight:700,lineHeight:1}}>✓</span>}
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{...sans(14,C.text),textDecoration:item.done?"line-through":"none",lineHeight:1.5,wordBreak:"break-word"}}>{item.text}</div>
+        {item.note&&<div style={{...sans(12,C.dim),marginTop:3}}>{item.note}</div>}
+        <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+          {item.priority&&item.priority!=="normal"&&<Chip label={item.priority.toUpperCase()} color={item.priority==="urgent"?C.red:C.orange} size={9}/>}
+          {item.due&&<Chip label={`Due ${item.due}`} color={C.dim} size={9}/>}
+          {item.metric&&<Chip label={item.metric} color={C.purple} size={9}/>}
+        </div>
+      </div>
+      <button onClick={()=>onDelete(item.id)} style={{background:"none",border:"none",color:C.dim,cursor:"pointer",fontSize:18,padding:"0 4px",flexShrink:0,lineHeight:1}}>×</button>
+    </div>
+  );
+}
+
+function ItemList({items,onToggle,onDelete,empty="Nothing logged yet"}){
+  if(!items.length)return<div style={{textAlign:"center",padding:"32px 0",...sans(14,C.dim)}}>{empty}</div>;
+  const sorted=[...items].sort((a,b)=>{const o={urgent:0,high:1,normal:2};return(o[a.priority]??2)-(o[b.priority]??2);});
+  return<div>{sorted.map(i=><ItemRow key={i.id} item={i} onToggle={onToggle} onDelete={onDelete}/>)}</div>;
+}
+
+function QuickAdd({onAdd,ph="Add item...",showPriority=true,showDue=false,showNote=false,showMetric=false}){
+  const [text,setText]=useState("");
+  const [priority,setPriority]=useState("normal");
+  const [due,setDue]=useState("");
+  const [note,setNote]=useState("");
+  const [metric,setMetric]=useState("");
+  const [open,setOpen]=useState(false);
+  function go(){
+    if(!text.trim())return;
+    onAdd({text,priority,due:due||null,note:note||null,metric:metric||null});
+    setText("");setDue("");setNote("");setMetric("");setPriority("normal");setOpen(false);
+  }
+  const inputStyle={background:"#FFF",border:`1.5px solid ${C.border2}`,borderRadius:10,padding:"11px 14px",...sans(13,C.text),outline:"none"};
+  return(
+    <div style={{marginBottom:18}}>
+      <div style={{display:"flex",gap:8}}>
+        <input value={text} onChange={e=>setText(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&go()} onFocus={()=>setOpen(true)}
+          placeholder={ph} style={{...inputStyle,flex:1}}/>
+        <button onClick={go} style={{
+          background:C.gold,border:"none",borderRadius:10,padding:"11px 18px",
+          ...sans(13,"#FFF",600),cursor:"pointer",flexShrink:0,letterSpacing:0.5,
+        }}>+ Add</button>
+      </div>
+      {open&&(
+        <div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap",alignItems:"center",padding:"10px 12px",background:C.card2,borderRadius:10,border:`1px solid ${C.border}`}}>
+          {showPriority&&(
+            <select value={priority} onChange={e=>setPriority(e.target.value)} style={{...inputStyle,padding:"7px 10px",...sans(12,C.text)}}>
+              <option value="normal">⚪ Normal</option>
+              <option value="high">🟡 High</option>
+              <option value="urgent">🔴 Urgent</option>
+            </select>
+          )}
+          {showDue&&<input type="date" value={due} onChange={e=>setDue(e.target.value)} style={{...inputStyle,padding:"7px 10px",...sans(12,C.text)}}/>}
+          {showNote&&<input value={note} onChange={e=>setNote(e.target.value)} placeholder="Add a note..." style={{...inputStyle,flex:1,minWidth:140,padding:"7px 10px",...sans(12,C.text)}}/>}
+          {showMetric&&<input value={metric} onChange={e=>setMetric(e.target.value)} placeholder="Metric / target..." style={{...inputStyle,flex:1,minWidth:140,padding:"7px 10px",...sans(12,C.text)}}/>}
+          <button onClick={()=>setOpen(false)} style={{background:"none",border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 12px",...sans(11,C.dim),cursor:"pointer"}}>Done</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProgressBar({pct,color=C.gold,h=6}){
+  return(
+    <div style={{height:h,background:C.border,borderRadius:h/2,overflow:"hidden"}}>
+      <div style={{height:"100%",width:`${Math.min(100,Math.max(0,pct))}%`,background:color,borderRadius:h/2}}/>
+    </div>
+  );
+}
+
+function StatBox({value,label,color=C.gold}){
+  return(
+    <div style={{textAlign:"center",padding:"14px 8px",background:C.card2,borderRadius:12,flex:1,border:`1px solid ${C.border}`}}>
+      <div style={{...play(28),color}}>{value}</div>
+      <div style={sans(11,C.dim)}>{label}</div>
+    </div>
+  );
+}
+
+function Clock(){
+  const [now,setNow]=useState(new Date());
+  useEffect(()=>{const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t);},[]);
+  const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return(
+    <div style={{textAlign:"right"}}>
+      <div style={{...mono(20,C.gold),fontWeight:500}}>
+        {now.getHours().toString().padStart(2,"0")}:{now.getMinutes().toString().padStart(2,"0")}
+        <span style={{fontSize:12,color:C.dim}}>:{now.getSeconds().toString().padStart(2,"0")}</span>
+      </div>
+      <div style={sans(10,C.dim)}>{days[now.getDay()]} · {now.getDate()} {months[now.getMonth()]} {now.getFullYear()}</div>
+    </div>
+  );
+}
+
+// ─── HOME ─────────────────────────────────────────────────────
+function HomeSection({allData}){
+  const {hospItems,bizItems,dayItems,finItems,persItems,quickItems,addQuick,deleteQuick,setTab}=allData;
+  const urgentH=hospItems.filter(i=>!i.done&&i.priority==="urgent").length;
+  const urgentB=bizItems.filter(i=>!i.done&&i.priority==="urgent").length;
+  const todayDone=dayItems.filter(i=>i.done).length;
+  const todayTotal=dayItems.length;
+  const cards=[
+    {icon:"🏥",label:"Hospital",urgents:urgentH,total:hospItems.filter(i=>!i.done).length,color:C.blue,bg:C.blueBg,tab:"hospital"},
+    {icon:"💼",label:"Business",urgents:urgentB,total:bizItems.filter(i=>!i.done).length,color:C.gold,bg:C.goldD,tab:"business"},
+    {icon:"📅",label:"Today",urgents:0,done:todayDone,total2:todayTotal,color:C.green,bg:C.greenBg,tab:"day"},
+    {icon:"💰",label:"Finance",urgents:finItems.filter(i=>!i.done&&i.priority==="urgent").length,total:finItems.filter(i=>!i.done).length,color:C.purple,bg:C.purpleBg,tab:"finance"},
+    {icon:"👤",label:"Personal",urgents:persItems.filter(i=>!i.done&&i.priority==="urgent").length,total:persItems.filter(i=>!i.done).length,color:C.pink,bg:C.pinkBg,tab:"personal"},
+  ];
+  return(
+    <div>
+      <div style={{marginBottom:22,paddingTop:4}}>
+        <div style={play(24)}>Good day, Dr. Sanil.</div>
+        <div style={sans(13,C.dim,400)}>Al Ain, UAE · NMC Medical Director · Orthopaedic Surgeon</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+        {cards.map(card=>(
+          <div key={card.tab} onClick={()=>setTab(card.tab)} style={{
+            background:card.urgents>0?card.bg:C.card,
+            border:`2px solid ${card.urgents>0?card.color:C.border}`,
+            borderRadius:16,padding:14,cursor:"pointer",
+            boxShadow:"0 2px 8px rgba(0,0,0,0.07)",
+          }}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+              <span style={{fontSize:22}}>{card.icon}</span>
+              {card.urgents>0&&<Chip label={`🚨 ${card.urgents}`} color={C.red} size={9}/>}
+            </div>
+            <div style={sans(14,C.text,600)}>{card.label}</div>
+            <div style={sans(12,C.dim)}>{card.label==="Today"?`${card.done||0}/${card.total2||0} tasks`:`${card.total||0} open`}</div>
+            {card.label==="Today"&&card.total2>0&&<div style={{marginTop:8}}><ProgressBar pct={(card.done||0)/card.total2*100} color={card.color} h={5}/></div>}
+          </div>
+        ))}
+      </div>
+
+      <Card style={{marginBottom:16}}>
+        <SectionHead icon="📅" title="Fixed Schedule Today"/>
+        {FIXED_SCHED.map((s,i)=>{
+          const now=new Date(),cm=now.getHours()*60+now.getMinutes();
+          const [sh,sm2]=s.time.split(":").map(Number);
+          const [eh,em2]=s.end.split(":").map(Number);
+          const isNow=cm>=sh*60+sm2&&cm<eh*60+em2;
+          return(
+            <div key={i} style={{
+              display:"flex",gap:12,alignItems:"center",
+              padding:"10px 12px",borderRadius:10,marginBottom:6,
+              background:isNow?s.bg:"transparent",
+              border:`1px solid ${isNow?s.color:C.border}`,
+            }}>
+              <span style={{...mono(11,isNow?s.color:C.dim),width:42,textAlign:"right",flexShrink:0,fontWeight:500}}>{s.time}</span>
+              <div style={{width:9,height:9,borderRadius:"50%",background:isNow?s.color:C.border,border:`2px solid ${s.color}`,flexShrink:0}}/>
+              <div style={{flex:1}}>
+                <span style={sans(13,isNow?C.text:C.dim,isNow?600:400)}>{s.label}</span>
+                {isNow&&<span style={{...mono(9,s.color),marginLeft:8,background:s.color+"18",border:`1px solid ${s.color}`,borderRadius:4,padding:"1px 6px",fontWeight:500}}>NOW</span>}
+              </div>
+            </div>
+          );
+        })}
+      </Card>
+
+      <Card>
+        <SectionHead icon="⚡" title="Quick Capture"/>
+        <QuickAdd onAdd={addQuick} ph="Dump a thought, task, or flag..." showPriority showNote/>
+        {quickItems.slice(0,5).map(item=>(
+          <div key={item.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 4px",borderBottom:`1px solid ${C.border}`}}>
+            <span style={sans(13,C.text)}>{item.text}</span>
+            <button onClick={()=>deleteQuick(item.id)} style={{background:"none",border:"none",color:C.dim,cursor:"pointer",fontSize:18,padding:"0 4px"}}>×</button>
+          </div>
+        ))}
+      </Card>
+    </div>
+  );
+}
+
+// ─── DAY ──────────────────────────────────────────────────────
+function DaySection(){
+  const [phase,setPhase]=useState("morning");
+  const [energy,setEnergy]=useState(()=>sGet(`sanil:energy:${dKey()}`)||7);
+  const [focus,setFocus]=useState(()=>sGet(`sanil:focus:${dKey()}`)||"");
+  const [rating,setRating]=useState(()=>sGet(`sanil:rating:${dKey()}`)||7);
+  const [review,setReview]=useState(()=>sGet(`sanil:review:${dKey()}`)||{done:"",pending:"",tomorrow:""});
+  const {items,addItem,toggleItem,deleteItem}=useItems(`sanil:day:${dKey()}`);
+  const [cat,setCat]=useState("hospital");
+  const catItems=items.filter(i=>i.cat===cat);
+  const done=items.filter(i=>i.done).length;
+  const pct=items.length?Math.round(done/items.length*100):0;
+
+  return(
+    <div>
+      <ScrollTabs cats={[
+        {id:"morning",label:"Morning",icon:"🌅",color:C.orange},
+        {id:"plan",label:"Day Plan",icon:"📋",color:C.blue},
+        {id:"evening",label:"Evening",icon:"🌙",color:C.purple},
+      ]} active={phase} onSelect={setPhase}/>
+
+      {phase==="morning"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:16}}>
+          <Card>
+            <SectionHead icon="⚡" title="Energy Level" color={C.orange}/>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
+              {[1,2,3,4,5,6,7,8,9,10].map(n=>(
+                <button key={n} onClick={()=>{setEnergy(n);sSet(`sanil:energy:${dKey()}`,n);}} style={{
+                  width:44,height:44,borderRadius:10,
+                  border:`2px solid ${energy===n?C.orange:C.border}`,
+                  background:energy===n?C.orange:"#FFF",
+                  ...sans(14,energy===n?"#FFF":C.dim,600),cursor:"pointer",
+                }}>{n}</button>
+              ))}
+            </div>
+            <div style={{...sans(13,energy<=3?C.red:energy<=6?C.orange:C.green,500)}}>
+              {energy<=3?"🔴 Low — protect your rest window":energy<=6?"🟡 Moderate — pace yourself":"🟢 High energy — good day for big decisions"}
+            </div>
+          </Card>
+
+          <Card>
+            <SectionHead icon="🎯" title="One Focus Today" color={C.blue}/>
+            <textarea value={focus} onChange={e=>setFocus(e.target.value)} onBlur={()=>sSet(`sanil:focus:${dKey()}`,focus)}
+              placeholder="The ONE thing that makes today a win..."
+              style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border2}`,borderRadius:10,padding:"12px 14px",...sans(14,C.text),outline:"none",resize:"none",height:80,lineHeight:1.6,display:"block"}}/>
+          </Card>
+
+          <Card>
+            <SectionHead icon="📅" title="Fixed Blocks"/>
+            {FIXED_SCHED.map((s,i)=>(
+              <div key={i} style={{display:"flex",gap:12,alignItems:"center",padding:"9px 0",borderBottom:i<FIXED_SCHED.length-1?`1px solid ${C.border}`:"none"}}>
+                <span style={{...mono(11,C.dim),width:42,textAlign:"right",flexShrink:0}}>{s.time}</span>
+                <div style={{width:9,height:9,borderRadius:"50%",background:s.color,flexShrink:0}}/>
+                <div><div style={sans(13,C.text,500)}>{s.label}</div><div style={sans(11,C.dim)}>{s.sub}</div></div>
+              </div>
+            ))}
+          </Card>
+
+          <button onClick={()=>setPhase("plan")} style={{width:"100%",padding:15,background:C.gold,border:"none",borderRadius:12,...sans(14,"#FFF",600),cursor:"pointer",letterSpacing:0.5}}>
+            Build Today's Plan →
+          </button>
+        </div>
+      )}
+
+      {phase==="plan"&&(
+        <div>
+          {items.length>0&&(
+            <Card style={{marginBottom:16}}>
+              <div style={{display:"flex",gap:8,marginBottom:12}}>
+                <StatBox value={done} label="Done" color={C.green}/>
+                <StatBox value={items.length-done} label="Left" color={C.red}/>
+                <StatBox value={`${pct}%`} label="Complete" color={C.gold}/>
+              </div>
+              <ProgressBar pct={pct} color={pct>=80?C.green:pct>=50?C.gold:C.red} h={8}/>
+            </Card>
+          )}
+          <Card style={{marginBottom:16}}>
+            <SectionHead icon="➕" title="Add Task"/>
+            <select value={cat} onChange={e=>setCat(e.target.value)} style={{width:"100%",background:"#FFF",border:`1.5px solid ${C.border2}`,borderRadius:10,padding:"10px 14px",...sans(13,C.text),outline:"none",cursor:"pointer",marginBottom:10,display:"block"}}>
+              {DAY_CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+            </select>
+            <QuickAdd onAdd={item=>addItem({...item,cat})} ph="What needs to get done?" showPriority showDue showNote/>
+          </Card>
+          <ScrollTabs cats={DAY_CATS} active={cat} onSelect={setCat}/>
+          <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty="No tasks in this category yet"/>
+          <button onClick={()=>setPhase("evening")} style={{width:"100%",marginTop:16,padding:15,background:C.purple,border:"none",borderRadius:12,...sans(14,"#FFF",600),cursor:"pointer"}}>
+            Evening Review →
+          </button>
+        </div>
+      )}
+
+      {phase==="evening"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <Card>
+            <SectionHead icon="📊" title="Day Summary"/>
+            <div style={{display:"flex",gap:8,marginBottom:12}}>
+              <StatBox value={done} label="Done" color={C.green}/>
+              <StatBox value={items.length-done} label="Pending" color={C.red}/>
+              <StatBox value={items.length} label="Total" color={C.gold}/>
+            </div>
+            <ProgressBar pct={pct} color={pct>=80?C.green:pct>=50?C.gold:C.red} h={8}/>
+          </Card>
+          <Card>
+            <SectionHead icon="⭐" title="Rate Your Day"/>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {[1,2,3,4,5,6,7,8,9,10].map(n=>(
+                <button key={n} onClick={()=>{setRating(n);sSet(`sanil:rating:${dKey()}`,n);}} style={{
+                  width:44,height:44,borderRadius:10,
+                  border:`2px solid ${rating===n?C.gold:C.border}`,
+                  background:rating===n?C.gold:"#FFF",
+                  ...sans(14,rating===n?"#FFF":C.dim,600),cursor:"pointer",
+                }}>{n}</button>
+              ))}
+            </div>
+          </Card>
+          {[
+            {key:"done",label:"✅ What did you complete?",ph:"Key wins today..."},
+            {key:"pending",label:"⏳ What is still pending?",ph:"Carry to tomorrow..."},
+            {key:"tomorrow",label:"🎯 What MUST happen tomorrow?",ph:"Top priority tomorrow..."},
+          ].map(q=>(
+            <Card key={q.key}>
+              <div style={{...sans(13,C.dim,500),marginBottom:8}}>{q.label}</div>
+              <textarea value={review[q.key]} onChange={e=>{const r={...review,[q.key]:e.target.value};setReview(r);sSet(`sanil:review:${dKey()}`,r);}}
+                placeholder={q.ph}
+                style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border2}`,borderRadius:10,padding:"11px 13px",...sans(13,C.text),outline:"none",resize:"none",height:70,lineHeight:1.6,display:"block"}}/>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── HOSPITAL ─────────────────────────────────────────────────
+function HospitalSection(){
+  const [cat,setCat]=useState("meetings");
+  const {items,addItem,toggleItem,deleteItem}=useItems("sanil:hospital");
+  const catItems=items.filter(i=>i.subcat===cat);
+  const curCat=HOSP_CATS.find(c=>c.id===cat);
+  const urgents=items.filter(i=>i.priority==="urgent"&&!i.done).length;
+  return(
+    <div>
+      {urgents>0&&(
+        <div style={{background:C.redBg,border:`2px solid ${C.red}`,borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",gap:10,alignItems:"center"}}>
+          <span style={{fontSize:20}}>🚨</span>
+          <span style={sans(14,C.red,600)}>{urgents} urgent hospital item{urgents>1?"s":""} needing action today</span>
+        </div>
+      )}
+      <ScrollTabs cats={HOSP_CATS} active={cat} onSelect={setCat}/>
+      <QuickAdd onAdd={item=>addItem({...item,subcat:cat})} ph={`Add to ${curCat?.label}...`} showPriority showDue={["meetings","actions","governance"].includes(cat)} showNote showMetric={cat==="kpi"}/>
+      <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty={`No ${curCat?.label} logged yet`}/>
+    </div>
+  );
+}
+
+// ─── BUSINESS ─────────────────────────────────────────────────
+function BusinessSection(){
+  const [biz,setBiz]=useState("skewers");
+  const [cat,setCat]=useState("actions");
+  const {items,addItem,toggleItem,deleteItem}=useItems("sanil:business");
+  const curBiz=BUSINESSES.find(b=>b.id===biz);
+  const catItems=items.filter(i=>i.biz===biz&&i.subcat===cat);
+  const bizTotal=items.filter(i=>i.biz===biz&&!i.done).length;
+  const bizUrgent=items.filter(i=>i.biz===biz&&!i.done&&i.priority==="urgent").length;
+  return(
+    <div>
+      <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:6,marginBottom:16,scrollbarWidth:"none"}}>
+        {BUSINESSES.map(b=>(
+          <button key={b.id} onClick={()=>{setBiz(b.id);setCat("actions");}} style={{
+            padding:"10px 14px",borderRadius:14,
+            border:`2px solid ${biz===b.id?b.color:C.border}`,
+            background:biz===b.id?b.color+"15":C.card,
+            cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,flexShrink:0,
+            boxShadow:"0 1px 4px rgba(0,0,0,0.07)",
+          }}>
+            <span style={{fontSize:22}}>{b.icon}</span>
+            <span style={sans(10,biz===b.id?b.color:C.dim,biz===b.id?700:400)}>{b.name.split(" ")[0]}</span>
+          </button>
+        ))}
+      </div>
+
+      <Card style={{marginBottom:16,borderColor:curBiz?.color,borderWidth:2}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div>
+            <div style={sans(16,C.text,700)}>{curBiz?.icon} {curBiz?.name}</div>
+            <div style={sans(12,C.dim)}>{curBiz?.sub}</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{...play(26),color:curBiz?.color}}>{bizTotal}</div>
+            <div style={sans(11,C.dim)}>open items</div>
+            {bizUrgent>0&&<div style={{marginTop:4}}><Chip label={`🚨 ${bizUrgent} URGENT`} color={C.red} size={9}/></div>}
+          </div>
+        </div>
+      </Card>
+
+      <ScrollTabs cats={BIZ_CATS} active={cat} onSelect={setCat}/>
+      <QuickAdd onAdd={item=>addItem({...item,biz,subcat:cat})} ph={`Add to ${curBiz?.name}...`} showPriority showDue showNote/>
+      <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty={`No ${BIZ_CATS.find(c=>c.id===cat)?.label} logged yet`}/>
+    </div>
+  );
+}
+
+// ─── FINANCE ──────────────────────────────────────────────────
+function FinanceSection(){
+  const [cat,setCat]=useState("income");
+  const {items,addItem,toggleItem,deleteItem}=useItems("sanil:finance");
+  const catItems=items.filter(i=>i.subcat===cat);
+  const curCat=FIN_CATS.find(c=>c.id===cat);
+  return(
+    <div>
+      <div style={{background:C.goldD,border:`2px solid ${C.gold}`,borderRadius:12,padding:"12px 16px",marginBottom:16}}>
+        <span style={sans(13,C.gold,500)}>💡 Log income, expenses, business revenue and savings goals. Build your financial picture over time.</span>
+      </div>
+      <ScrollTabs cats={FIN_CATS} active={cat} onSelect={setCat}/>
+      <QuickAdd onAdd={item=>addItem({...item,subcat:cat})}
+        ph={cat==="income"?"e.g. NMC Salary — AED 55,000":cat==="expenses"?"e.g. School fees — AED 8,000":cat==="biz"?"e.g. Skewers revenue — AED 120,000":"e.g. Emergency fund — AED 200,000"}
+        showPriority={false} showDue showNote showMetric/>
+      <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty={`No ${curCat?.label} entries yet`}/>
+    </div>
+  );
+}
+
+// ─── PERSONAL ─────────────────────────────────────────────────
+function PersonalSection(){
+  const [cat,setCat]=useState("family");
+  const {items,addItem,toggleItem,deleteItem}=useItems("sanil:personal");
+  const [scores,setScores]=useState(()=>sGet("sanil:scorecard")||{});
+  const catItems=items.filter(i=>i.subcat===cat);
+  const cornellItems=items.filter(i=>i.subcat==="cornell");
+  const cornellDone=cornellItems.filter(i=>i.done).length;
+  function setScore(area,val){const s={...scores,[area]:val};setScores(s);sSet("sanil:scorecard",s);}
+  return(
+    <div>
+      <ScrollTabs cats={PERS_CATS} active={cat} onSelect={setCat}/>
+      {cat==="family"&&(
+        <div>
+          <Card style={{marginBottom:16}}>
+            <SectionHead icon="👨‍👩‍👧" title="Family Members" color={C.pink}/>
+            {["Wife","Child 1","Child 2","Child 3","Mother-in-law"].map((m,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:i<4?`1px solid ${C.border}`:"none"}}>
+                <span style={sans(14,C.text,500)}>{m}</span>
+                <span style={sans(12,C.dim)}>→ log below</span>
+              </div>
+            ))}
+          </Card>
+          <QuickAdd onAdd={item=>addItem({...item,subcat:cat})} ph="Family note, event, or action..." showPriority showDue showNote/>
+          <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty="No family items logged"/>
+        </div>
+      )}
+      {cat==="cornell"&&(
+        <div>
+          <Card style={{marginBottom:16,borderColor:C.red,borderWidth:2,background:C.redBg}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <span style={sans(15,C.text,700)}>🎓 Cornell Healthcare Leadership</span>
+              <Chip label={cornellDone>0?"IN PROGRESS":"NOT STARTED"} color={cornellDone>0?C.gold:C.red} size={9}/>
+            </div>
+            <ProgressBar pct={cornellItems.length?cornellDone/cornellItems.length*100:0} color={cornellDone>0?C.gold:C.red} h={8}/>
+            <div style={{...sans(12,C.dim),marginTop:8}}>{cornellDone}/{cornellItems.length} modules · Enrolled</div>
+            <div style={{...sans(13,C.red,500),marginTop:10}}>⚡ Next: Log in → confirm start date → block 1hr/week in Outlook</div>
+          </Card>
+          <QuickAdd onAdd={item=>addItem({...item,subcat:cat})} ph="Module name, deadline, or study task..." showPriority showDue showNote/>
+          <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty="Add Cornell modules and deadlines here"/>
+        </div>
+      )}
+      {cat==="hobbies"&&(
+        <div>
+          <Card style={{marginBottom:16}}>
+            <SectionHead icon="🎧" title="Recharge Activities" color={C.purple}/>
+            {[{icon:"🎛️",name:"DJing",note:"Schedule your next session"},{icon:"✈️",name:"Travel",note:"Plan next trip"},{icon:"🎵",name:"Music",note:"Daily recharge — protect it"}].map((h,i)=>(
+              <div key={i} style={{display:"flex",gap:14,alignItems:"center",padding:"11px 0",borderBottom:i<2?`1px solid ${C.border}`:"none"}}>
+                <span style={{fontSize:24}}>{h.icon}</span>
+                <div><div style={sans(14,C.text,600)}>{h.name}</div><div style={sans(12,C.dim)}>{h.note}</div></div>
+              </div>
+            ))}
+          </Card>
+          <QuickAdd onAdd={item=>addItem({...item,subcat:cat})} ph="Hobby plan, booking, or reminder..." showPriority showDue/>
+          <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty="No hobby items logged"/>
+        </div>
+      )}
+      {cat==="scorecard"&&(
+        <Card>
+          <SectionHead icon="⭐" title="Monthly Life Scorecard"/>
+          <div style={{...sans(12,C.dim),marginBottom:18}}>Rate each life area 1–10. Use monthly to spot what's slipping.</div>
+          {LIFE_AREAS.map(area=>{
+            const val=scores[area]||0;
+            const color=val>=8?C.green:val>=5?C.gold:val>=1?C.red:C.dim;
+            return(
+              <div key={area} style={{marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <span style={sans(13,C.text,500)}>{area}</span>
+                  <div style={{display:"flex",gap:3}}>
+                    {[1,2,3,4,5,6,7,8,9,10].map(n=>(
+                      <button key={n} onClick={()=>setScore(area,n)} style={{
+                        width:26,height:26,borderRadius:5,
+                        border:`1.5px solid ${val===n?color:C.border}`,
+                        background:val===n?color:"#FFF",
+                        ...sans(10,val===n?"#FFF":C.dim,600),cursor:"pointer",padding:0,
+                      }}>{n}</button>
+                    ))}
+                  </div>
+                </div>
+                <ProgressBar pct={val*10} color={color} h={6}/>
+              </div>
+            );
+          })}
+          <div style={{...sans(13,C.dim,500),marginTop:16,textAlign:"center",padding:"12px",background:C.card2,borderRadius:10}}>
+            Average Score: <span style={{...sans(15,C.gold,700)}}>{LIFE_AREAS.filter(a=>scores[a]).length?Math.round(LIFE_AREAS.reduce((s,a)=>s+(scores[a]||0),0)/LIFE_AREAS.filter(a=>scores[a]).length*10)/10:"—"} / 10</span>
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────
+function App(){
+  const [tab,setTab]=useState("home");
+  const [isMobile,setIsMobile]=useState(window.innerWidth<768);
+  const {items:hospItems}=useItems("sanil:hospital");
+  const {items:bizItems}=useItems("sanil:business");
+  const {items:dayItems}=useItems(`sanil:day:${dKey()}`);
+  const {items:finItems}=useItems("sanil:finance");
+  const {items:persItems}=useItems("sanil:personal");
+  const {items:quickItems,addItem:addQuick,deleteItem:deleteQuick}=useItems("sanil:quick");
+  useEffect(()=>{const fn=()=>setIsMobile(window.innerWidth<768);window.addEventListener("resize",fn);return()=>window.removeEventListener("resize",fn);},[]);
+  const allData={hospItems,bizItems,dayItems,finItems,persItems,quickItems,addQuick,deleteQuick,setTab};
+
+  return(
+    <div style={{
+      minHeight:"100vh",background:C.bg,color:C.text,
+      fontFamily:"'IBM Plex Sans',sans-serif",
+      paddingBottom:isMobile?82:0,
+    }}>
+      {/* HEADER */}
+      <div style={{
+        padding:`14px ${isMobile?"16px":"28px"}`,
+        borderBottom:`2px solid ${C.border}`,
+        display:"flex",justifyContent:"space-between",alignItems:"center",
+        background:"#FFF",position:"sticky",top:0,zIndex:100,
+        boxShadow:"0 2px 8px rgba(0,0,0,0.06)",
+      }}>
+        <div>
+          <div style={{...play(isMobile?17:21),lineHeight:1.2}}>Dr. Sanil OS</div>
+          <div style={sans(10,C.dim)}>Medical Director · Surgeon · Entrepreneur</div>
+        </div>
+        <Clock/>
+      </div>
+
+      {/* DESKTOP NAV */}
+      {!isMobile&&(
+        <div style={{display:"flex",borderBottom:`2px solid ${C.border}`,padding:"0 28px",background:"#FFF"}}>
+          {NAV_ITEMS.map(n=>(
+            <button key={n.id} onClick={()=>setTab(n.id)} style={{
+              padding:"13px 20px",background:"none",border:"none",cursor:"pointer",
+              ...sans(12,tab===n.id?C.gold:C.dim,tab===n.id?700:400),
+              borderBottom:tab===n.id?`3px solid ${C.gold}`:"3px solid transparent",
+              marginBottom:-2,letterSpacing:0.3,
+            }}>{n.icon} {n.label}</button>
+          ))}
+        </div>
+      )}
+
+      {/* CONTENT */}
+      <div style={{padding:isMobile?"16px":"24px 28px",maxWidth:isMobile?"100%":960,margin:"0 auto"}}>
+        {tab==="home"&&<HomeSection allData={allData}/>}
+        {tab==="day"&&<DaySection/>}
+        {tab==="hospital"&&<HospitalSection/>}
+        {tab==="business"&&<BusinessSection/>}
+        {tab==="finance"&&<FinanceSection/>}
+        {tab==="personal"&&<PersonalSection/>}
+      </div>
+
+      {/* MOBILE BOTTOM NAV */}
+      {isMobile&&(
+        <div style={{
+          position:"fixed",bottom:0,left:0,right:0,
+          background:"#FFF",borderTop:`2px solid ${C.border}`,
+          display:"flex",zIndex:200,
+          paddingBottom:"env(safe-area-inset-bottom)",
+          boxShadow:"0 -2px 12px rgba(0,0,0,0.08)",
+        }}>
+          {NAV_ITEMS.map(n=>{
+            const a=tab===n.id;
+            return(
+              <button key={n.id} onClick={()=>setTab(n.id)} style={{
+                flex:1,display:"flex",flexDirection:"column",alignItems:"center",
+                padding:"10px 4px 8px",background:"none",border:"none",cursor:"pointer",gap:3,
+              }}>
+                <span style={{fontSize:20,opacity:a?1:0.35}}>{n.icon}</span>
+                <span style={{...sans(9,a?C.gold:C.dim,a?700:400),letterSpacing:0.3}}>{n.label}</span>
+                {a&&<div style={{width:24,height:3,background:C.gold,borderRadius:2}}/>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
