@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Dr. Sanil OS"/>
+<title>Dr. Sanil OS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+html,body,#root{min-height:100%;background:#0D1117;}
+::-webkit-scrollbar{display:none;}
+input,select,textarea{font-family:'DM Sans',sans-serif;}
+button{font-family:'DM Sans',sans-serif;transition:all 0.18s ease;}
+button:active{transform:scale(0.96);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+@keyframes glow{0%,100%{box-shadow:0 0 12px rgba(99,102,241,0.4);}50%{box-shadow:0 0 24px rgba(99,102,241,0.7);}}
+.fade-in{animation:slideUp 0.35s ease forwards;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+
+// ── TOKENS ────────────────────────────────────────────────────
+const T={
+  bg:"#0D1117",
+  surface:"#161B22",
+  surfaceHigh:"#21262D",
+  border:"rgba(255,255,255,0.08)",
+  text:"#F0F6FC",
+  textMid:"#8B949E",
+  textDim:"#484F58",
+  // Vivid brand colors
+  indigo:"#6366F1",  indigoL:"#818CF8",  indigoD:"rgba(99,102,241,0.15)",
+  cyan:"#06B6D4",    cyanL:"#67E8F9",    cyanD:"rgba(6,182,212,0.12)",
+  emerald:"#10B981", emeraldL:"#6EE7B7", emeraldD:"rgba(16,185,129,0.12)",
+  amber:"#F59E0B",   amberL:"#FCD34D",   amberD:"rgba(245,158,11,0.12)",
+  rose:"#F43F5E",    roseL:"#FDA4AF",    roseD:"rgba(244,63,94,0.12)",
+  violet:"#8B5CF6",  violetL:"#C4B5FD",  violetD:"rgba(139,92,246,0.12)",
+  orange:"#F97316",  orangeL:"#FDBA74",  orangeD:"rgba(249,115,22,0.12)",
+  pink:"#EC4899",    pinkL:"#F9A8D4",    pinkD:"rgba(236,72,153,0.12)",
+};
+
+// ── CONSTANTS ─────────────────────────────────────────────────
+const HOSP_CATS=[
+  {id:"meetings",label:"Meetings",icon:"🗓",color:T.cyan,bg:T.cyanD},
+  {id:"actions",label:"Actions",icon:"✅",color:T.emerald,bg:T.emeraldD},
+  {id:"red",label:"Red Flags",icon:"🔴",color:T.rose,bg:T.roseD},
+  {id:"kpi",label:"KPIs",icon:"📊",color:T.violet,bg:T.violetD},
+  {id:"governance",label:"Governance",icon:"⚖️",color:T.amber,bg:T.amberD},
+  {id:"others",label:"Others",icon:"📌",color:T.textMid,bg:"rgba(139,148,158,0.1)"},
+];
+const BUSINESSES=[
+  {id:"skewers",name:"The Skewers",sub:"Korean BBQ · Abu Dhabi",icon:"🔥",color:T.orange,bg:T.orangeD},
+  {id:"annyeong",name:"Annyeong Spa",sub:"Korean Spa · Al Ain",icon:"🌸",color:T.pink,bg:T.pinkD},
+  {id:"seafield",name:"Seafield Rehab",sub:"Rehab · Kerala",icon:"🏥",color:T.cyan,bg:T.cyanD},
+  {id:"orthonexa",name:"Orthonexa",sub:"Innovations · Biolife",icon:"🦾",color:T.violet,bg:T.violetD},
+  {id:"orthoplus",name:"Orthoplus",sub:"Ortho · Al Ain",icon:"🦴",color:T.amber,bg:T.amberD},
+];
+const BIZ_CATS=[
+  {id:"revenue",label:"Revenue",icon:"💹",color:T.emerald,bg:T.emeraldD},
+  {id:"operations",label:"Ops",icon:"⚙️",color:T.cyan,bg:T.cyanD},
+  {id:"staff",label:"Staff",icon:"👥",color:T.violet,bg:T.violetD},
+  {id:"actions",label:"Actions",icon:"✅",color:T.amber,bg:T.amberD},
+  {id:"issues",label:"Issues",icon:"🔴",color:T.rose,bg:T.roseD},
+];
+const FIN_CATS=[
+  {id:"income",label:"Income",icon:"💵",color:T.emerald,bg:T.emeraldD},
+  {id:"expenses",label:"Expenses",icon:"💸",color:T.rose,bg:T.roseD},
+  {id:"biz",label:"Biz Revenue",icon:"📈",color:T.amber,bg:T.amberD},
+  {id:"goals",label:"Goals",icon:"🎯",color:T.violet,bg:T.violetD},
+];
+const PERS_CATS=[
+  {id:"family",label:"Family",icon:"👨‍👩‍👧",color:T.pink,bg:T.pinkD},
+  {id:"cornell",label:"Cornell",icon:"🎓",color:T.rose,bg:T.roseD},
+  {id:"hobbies",label:"Hobbies",icon:"🎧",color:T.violet,bg:T.violetD},
+  {id:"scorecard",label:"Scorecard",icon:"⭐",color:T.amber,bg:T.amberD},
+];
+const DAY_CATS=[
+  {id:"hospital",label:"Hospital",icon:"🏥",color:T.cyan,bg:T.cyanD},
+  {id:"business",label:"Business",icon:"💼",color:T.amber,bg:T.amberD},
+  {id:"orthoplus",label:"Orthoplus",icon:"🦴",color:T.violet,bg:T.violetD},
+  {id:"cornell",label:"Cornell",icon:"🎓",color:T.rose,bg:T.roseD},
+  {id:"personal",label:"Personal",icon:"👤",color:T.emerald,bg:T.emeraldD},
+];
+const LIFE_AREAS=["Health","Finance","Family","Career","Hospital","Business","Cornell","Hobbies","Sleep","Mindset"];
+const FIXED_SCHED=[
+  {time:"09:15",end:"09:30",label:"Morning Huddle",sub:"Director · PSQ · Nursing",color:T.cyan},
+  {time:"09:30",end:"14:00",label:"Core Team + Governance",sub:"Dept heads · Meetings · Clinical",color:T.indigo},
+  {time:"14:00",end:"17:00",label:"Lunch + Rest",sub:"Protected — do not book",color:T.emerald},
+  {time:"17:00",end:"21:00",label:"Orthoplus Clinic",sub:"Surgery · Consults",color:T.amber},
+];
+const NAV=[
+  {id:"home",icon:"⬡",label:"Home",color:T.indigo},
+  {id:"day",icon:"📅",label:"Day",color:T.cyan},
+  {id:"hospital",icon:"🏥",label:"Hospital",color:T.rose},
+  {id:"business",icon:"💼",label:"Business",color:T.amber},
+  {id:"finance",icon:"💰",label:"Finance",color:T.emerald},
+  {id:"personal",icon:"👤",label:"Personal",color:T.violet},
+];
+
+// ── STORAGE ───────────────────────────────────────────────────
+const dKey=()=>{const d=new Date();return`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;};
+const sGet=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}};
+const sSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+function useItems(key){
+  const[items,setItems]=useState(()=>{const d=sGet(key);return Array.isArray(d)?d:[];});
+  const save=arr=>{setItems(arr);sSet(key,arr);};
+  return{
+    items,
+    addItem:item=>save([{...item,id:Date.now(),done:false},...items]),
+    toggleItem:id=>save(items.map(i=>i.id===id?{...i,done:!i.done}:i)),
+    deleteItem:id=>save(items.filter(i=>i.id!==id)),
+  };
+}
+
+// ── STYLE FNS ─────────────────────────────────────────────────
+const syne=(sz=18,col=T.text)=>({fontFamily:"'Syne',sans-serif",fontSize:sz,color:col,fontWeight:700,lineHeight:1.2});
+const dm=(sz=14,col=T.text,wt=400)=>({fontFamily:"'DM Sans',sans-serif",fontSize:sz,color:col,fontWeight:wt,lineHeight:1.5});
+const mono=(sz=11,col=T.textMid)=>({fontFamily:"'DM Mono',monospace",fontSize:sz,color:col,letterSpacing:0.5});
+
+// ── BASE COMPONENTS ───────────────────────────────────────────
+function GlowCard({children,color=T.indigo,style={},onClick}){
+  return(
+    <div onClick={onClick} style={{
+      background:T.surface,
+      border:`1px solid ${color}40`,
+      borderRadius:20,padding:18,
+      boxShadow:`0 4px 24px ${color}18, inset 0 1px 0 rgba(255,255,255,0.06)`,
+      ...style,cursor:onClick?"pointer":"default",
+    }}>{children}</div>
+  );
+}
+
+function Badge({label,color,bg,size=10}){
+  return(
+    <span style={{
+      ...mono(size,color),fontWeight:600,
+      background:bg||color+"20",
+      border:`1px solid ${color}50`,
+      borderRadius:6,padding:"3px 8px",
+      whiteSpace:"nowrap",display:"inline-block",
+    }}>{label}</span>
+  );
+}
+
+function SectionTitle({icon,title,color=T.indigo}){
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
+      <div style={{
+        width:30,height:30,borderRadius:8,
+        background:`${color}20`,border:`1px solid ${color}40`,
+        display:"flex",alignItems:"center",justifyContent:"center",
+        fontSize:15,flexShrink:0,
+      }}>{icon}</div>
+      <span style={{...syne(13,T.text),letterSpacing:0.3}}>{title}</span>
+      <div style={{flex:1,height:1,background:`linear-gradient(90deg,${color}40,transparent)`}}/>
+    </div>
+  );
+}
+
+function ScrollTabs({cats,active,onSelect}){
+  return(
+    <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:4,marginBottom:16,WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
+      {cats.map(c=>(
+        <button key={c.id} onClick={()=>onSelect(c.id)} style={{
+          padding:"8px 14px",borderRadius:30,
+          border:`1.5px solid ${active===c.id?c.color:"transparent"}`,
+          background:active===c.id?c.bg||c.color+"15":T.surfaceHigh,
+          ...dm(12,active===c.id?c.color:T.textMid,active===c.id?600:400),
+          whiteSpace:"nowrap",flexShrink:0,cursor:"pointer",
+        }}>{c.icon} {c.label}</button>
+      ))}
+    </div>
+  );
+}
+
+function BigStat({value,label,color=T.indigo,icon}){
+  return(
+    <div style={{
+      flex:1,background:color+"15",
+      border:`1px solid ${color}40`,borderRadius:16,
+      padding:"14px 10px",textAlign:"center",
+    }}>
+      {icon&&<div style={{fontSize:18,marginBottom:4}}>{icon}</div>}
+      <div style={{...syne(28,color),marginBottom:2}}>{value}</div>
+      <div style={dm(11,T.textMid)}>{label}</div>
+    </div>
+  );
+}
+
+function Bar({pct,color=T.indigo,h=8}){
+  return(
+    <div style={{height:h,background:"rgba(255,255,255,0.06)",borderRadius:h,overflow:"hidden"}}>
+      <div style={{
+        height:"100%",width:`${Math.min(100,Math.max(0,pct))}%`,
+        background:`linear-gradient(90deg,${color},${color}CC)`,
+        borderRadius:h,transition:"width 0.5s ease",
+        boxShadow:`0 0 8px ${color}60`,
+      }}/>
+    </div>
+  );
+}
+
+function Clock(){
+  const[now,setNow]=useState(new Date());
+  useEffect(()=>{const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t);},[]);
+  const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return(
+    <div style={{textAlign:"right"}}>
+      <div style={{...syne(22,T.text),background:`linear-gradient(135deg,${T.indigo},${T.cyan})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",lineHeight:1}}>
+        {now.getHours().toString().padStart(2,"0")}:{now.getMinutes().toString().padStart(2,"0")}
+      </div>
+      <div style={mono(10,T.textMid)}>{days[now.getDay()]} · {now.getDate()} {months[now.getMonth()]} {now.getFullYear()}</div>
+    </div>
+  );
+}
+
+// ── ITEM ROW ──────────────────────────────────────────────────
+function ItemRow({item,onToggle,onDelete}){
+  const prioColor=item.priority==="urgent"?T.rose:item.priority==="high"?T.amber:T.border;
+  const prioGlow=item.priority==="urgent"?T.roseD:item.priority==="high"?T.amberD:"transparent";
+  return(
+    <div style={{
+      display:"flex",gap:10,alignItems:"flex-start",
+      padding:"13px 14px",background:item.priority==="urgent"?T.roseD:T.surfaceHigh,
+      borderRadius:14,marginBottom:8,
+      border:`1.5px solid ${item.priority!=="normal"?prioColor:T.border}`,
+      opacity:item.done?0.45:1,transition:"opacity 0.2s",
+    }}>
+      <div onClick={()=>onToggle(item.id)} style={{
+        width:24,height:24,borderRadius:7,flexShrink:0,marginTop:1,
+        border:`2px solid ${item.done?T.emerald:"rgba(255,255,255,0.2)"}`,
+        background:item.done?`linear-gradient(135deg,${T.emerald},${T.emeraldL})`:T.surface,
+        display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",minWidth:24,
+        boxShadow:item.done?`0 0 10px ${T.emerald}60`:"none",
+      }}>
+        {item.done&&<span style={{color:"#fff",fontSize:13,fontWeight:700,lineHeight:1}}>✓</span>}
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{...dm(14,item.done?T.textMid:T.text,500),textDecoration:item.done?"line-through":"none",lineHeight:1.4,wordBreak:"break-word"}}>{item.text}</div>
+        {item.note&&<div style={{...dm(12,T.textMid),marginTop:4}}>{item.note}</div>}
+        <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+          {item.priority&&item.priority!=="normal"&&<Badge label={item.priority.toUpperCase()} color={item.priority==="urgent"?T.rose:T.amber}/>}
+          {item.due&&<Badge label={`📅 ${item.due}`} color={T.textMid}/>}
+          {item.metric&&<Badge label={item.metric} color={T.violet}/>}
+        </div>
+      </div>
+      <button onClick={()=>onDelete(item.id)} style={{background:"none",border:"none",color:T.textDim,cursor:"pointer",fontSize:18,padding:"0 2px",flexShrink:0,lineHeight:1}}>×</button>
+    </div>
+  );
+}
+
+function ItemList({items,onToggle,onDelete,empty="Nothing here yet"}){
+  if(!items.length)return(
+    <div style={{textAlign:"center",padding:"32px 0",display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+      <div style={{fontSize:32,opacity:0.3}}>✦</div>
+      <div style={dm(13,T.textDim)}>{empty}</div>
+    </div>
+  );
+  const sorted=[...items].sort((a,b)=>{const o={urgent:0,high:1,normal:2};return(o[a.priority]??2)-(o[b.priority]??2);});
+  return<div>{sorted.map(i=><ItemRow key={i.id} item={i} onToggle={onToggle} onDelete={onDelete}/>)}</div>;
+}
+
+function QuickAdd({onAdd,ph="Add item...",showPriority=true,showDue=false,showNote=false,showMetric=false}){
+  const[text,setText]=useState("");
+  const[priority,setPriority]=useState("normal");
+  const[due,setDue]=useState("");
+  const[note,setNote]=useState("");
+  const[metric,setMetric]=useState("");
+  const[open,setOpen]=useState(false);
+  const inStyle={background:T.surfaceHigh,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"11px 14px",...dm(13,T.text),outline:"none",color:T.text};
+  function go(){
+    if(!text.trim())return;
+    onAdd({text,priority,due:due||null,note:note||null,metric:metric||null});
+    setText("");setDue("");setNote("");setMetric("");setPriority("normal");setOpen(false);
+  }
+  return(
+    <div style={{marginBottom:16}}>
+      <div style={{display:"flex",gap:8}}>
+        <input value={text} onChange={e=>setText(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&go()} onFocus={()=>setOpen(true)}
+          placeholder={ph} style={{...inStyle,flex:1}}/>
+        <button onClick={go} style={{
+          background:`linear-gradient(135deg,${T.indigo},${T.cyan})`,
+          border:"none",borderRadius:12,padding:"11px 18px",
+          ...dm(13,"#fff",700),cursor:"pointer",flexShrink:0,
+          boxShadow:`0 4px 14px ${T.indigo}50`,
+        }}>＋ Add</button>
+      </div>
+      {open&&(
+        <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap",padding:"12px",background:T.surface,borderRadius:12,border:`1px solid ${T.border}`}}>
+          {showPriority&&(
+            <select value={priority} onChange={e=>setPriority(e.target.value)} style={{...inStyle,padding:"8px 12px",...dm(12,T.text)}}>
+              <option value="normal">⚪ Normal</option>
+              <option value="high">🟡 High</option>
+              <option value="urgent">🔴 Urgent</option>
+            </select>
+          )}
+          {showDue&&<input type="date" value={due} onChange={e=>setDue(e.target.value)} style={{...inStyle,padding:"8px 12px",...dm(12,T.text)}}/>}
+          {showNote&&<input value={note} onChange={e=>setNote(e.target.value)} placeholder="Note..." style={{...inStyle,flex:1,minWidth:120,padding:"8px 12px",...dm(12,T.text)}}/>}
+          {showMetric&&<input value={metric} onChange={e=>setMetric(e.target.value)} placeholder="Metric/Target..." style={{...inStyle,flex:1,minWidth:120,padding:"8px 12px",...dm(12,T.text)}}/>}
+          <button onClick={()=>setOpen(false)} style={{background:T.surfaceHigh,border:`1px solid ${T.border}`,borderRadius:10,padding:"8px 14px",...dm(12,T.textMid),cursor:"pointer"}}>Done</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── SYNC BUTTON ───────────────────────────────────────────────
+function SyncBtn({items,energy,focus,rating,review}){
+  const[copied,setCopied]=useState(false);
+  const[show,setShow]=useState(false);
+  function buildText(){
+    const now=new Date();
+    const dateStr=`${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+    const done=items?items.filter(i=>i.done).length:0;
+    const total=items?items.length:0;
+    let t=`📅 DAILY LOG — ${dateStr}\n━━━━━━━━━━━━━━━━━━━━\n`;
+    if(energy)t+=`⚡ Energy: ${energy}/10\n`;
+    if(focus)t+=`🎯 Focus: ${focus}\n`;
+    t+=`📊 Tasks: ${done}/${total} done\n`;
+    if(rating)t+=`⭐ Rating: ${rating}/10\n\n`;
+    if(review?.done)t+=`✅ Done:\n${review.done}\n\n`;
+    if(review?.pending)t+=`⏳ Pending:\n${review.pending}\n\n`;
+    if(review?.tomorrow)t+=`🎯 Tomorrow:\n${review.tomorrow}\n\n`;
+    if(items?.length){
+      t+=`TASKS:\n`;
+      items.forEach(i=>t+=`${i.done?"✅":"⬜"} [${(i.cat||"").toUpperCase()}] ${i.text}${i.priority!=="normal"?" 🔴":""}\n`);
+    }
+    ["sanil:hospital","sanil:business","sanil:finance","sanil:personal"].forEach(key=>{
+      const arr=JSON.parse(localStorage.getItem(key)||"[]").filter(i=>!i.done);
+      if(arr.length){
+        const labels={"sanil:hospital":"🏥 HOSPITAL","sanil:business":"💼 BUSINESS","sanil:finance":"💰 FINANCE","sanil:personal":"👤 PERSONAL"};
+        t+=`\n${labels[key]} (${arr.length} open):\n`;
+        arr.forEach(i=>t+=`• ${i.text}${i.priority==="urgent"?" 🔴":""}\n`);
+      }
+    });
+    t+=`\n━━━━━━━━━━━━━━━━━━━━\n[Paste to Claude → say "sync to Notion"]`;
+    return t;
+  }
+  function go(){
+    const text=buildText();
+    navigator.clipboard.writeText(text).catch(()=>{
+      const el=document.createElement("textarea");el.value=text;
+      document.body.appendChild(el);el.select();document.execCommand("copy");document.body.removeChild(el);
+    });
+    setCopied(true);setShow(true);setTimeout(()=>setCopied(false),3000);
+  }
+  return(
+    <div style={{marginTop:12}}>
+      <button onClick={go} style={{
+        width:"100%",padding:17,
+        background:copied?`linear-gradient(135deg,${T.emerald},${T.emeraldL})`:`linear-gradient(135deg,${T.indigo},${T.cyan})`,
+        border:"none",borderRadius:16,...syne(14,"#fff"),
+        cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+        boxShadow:copied?`0 6px 20px ${T.emerald}50`:`0 6px 20px ${T.indigo}50`,
+      }}>
+        <span style={{fontSize:22}}>{copied?"✅":"📤"}</span>
+        {copied?"Copied! Paste to Claude":"Sync Everything to Notion"}
+      </button>
+      {show&&(
+        <div style={{marginTop:12,padding:16,background:T.indigoD,border:`1.5px solid ${T.indigo}50`,borderRadius:14}}>
+          <div style={{...syne(13,T.indigoL),marginBottom:10}}>3 steps to sync:</div>
+          {["Open Claude","Paste (hold → paste)","Type: sync to Notion"].map((s,i)=>(
+            <div key={i} style={{display:"flex",gap:10,alignItems:"center",marginBottom:8}}>
+              <div style={{width:24,height:24,borderRadius:"50%",background:`linear-gradient(135deg,${T.indigo},${T.cyan})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <span style={dm(11,"#fff",700)}>{i+1}</span>
+              </div>
+              <span style={dm(13,T.text)}>{s}</span>
+            </div>
+          ))}
+          <button onClick={()=>setShow(false)} style={{background:"none",border:"none",...dm(11,T.textMid),cursor:"pointer",textDecoration:"underline",marginTop:4}}>Dismiss</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── HOME ──────────────────────────────────────────────────────
+function Home({all}){
+  const{hospItems,bizItems,dayItems,finItems,persItems,quickItems,addQuick,deleteQuick,setTab}=all;
+  const urgH=hospItems.filter(i=>!i.done&&i.priority==="urgent").length;
+  const urgB=bizItems.filter(i=>!i.done&&i.priority==="urgent").length;
+  const tDone=dayItems.filter(i=>i.done).length;
+  const tTotal=dayItems.length;
+  const cards=[
+    {icon:"🏥",label:"Hospital",urgents:urgH,open:hospItems.filter(i=>!i.done).length,color:T.cyan,tab:"hospital"},
+    {icon:"💼",label:"Business",urgents:urgB,open:bizItems.filter(i=>!i.done).length,color:T.amber,tab:"business"},
+    {icon:"📅",label:"Today",urgents:0,done:tDone,total:tTotal,color:T.indigo,tab:"day"},
+    {icon:"💰",label:"Finance",urgents:finItems.filter(i=>!i.done&&i.priority==="urgent").length,open:finItems.filter(i=>!i.done).length,color:T.emerald,tab:"finance"},
+    {icon:"👤",label:"Personal",urgents:persItems.filter(i=>!i.done&&i.priority==="urgent").length,open:persItems.filter(i=>!i.done).length,color:T.violet,tab:"personal"},
+  ];
+  return(
+    <div className="fade-in">
+      {/* Header greeting */}
+      <div style={{marginBottom:24,padding:"8px 0"}}>
+        <div style={{...mono(11,T.textMid),marginBottom:6,letterSpacing:2}}>GOOD DAY</div>
+        <div style={{...syne(26,T.text),background:`linear-gradient(135deg,${T.text},${T.indigoL})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",lineHeight:1.1}}>Dr. Sanil<br/>Sathyadasan</div>
+        <div style={{...dm(12,T.textMid),marginTop:6}}>NMC Medical Director · Orthopaedic Surgeon</div>
+      </div>
+
+      {/* Urgent banner */}
+      {(urgH+urgB)>0&&(
+        <div style={{
+          padding:"14px 16px",marginBottom:16,borderRadius:16,
+          background:`linear-gradient(135deg,${T.rose}20,${T.roseD})`,
+          border:`1.5px solid ${T.rose}50`,
+          display:"flex",alignItems:"center",gap:12,
+        }}>
+          <span style={{fontSize:24,animation:"pulse 1.5s infinite"}}>🚨</span>
+          <div>
+            <div style={dm(14,T.roseL,700)}>{urgH+urgB} Urgent Items Need Action</div>
+            <div style={dm(12,T.textMid)}>Tap Hospital or Business to view</div>
+          </div>
+        </div>
+      )}
+
+      {/* Status grid */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+        {cards.map(card=>(
+          <div key={card.tab} onClick={()=>setTab(card.tab)} style={{
+            background:T.surface,
+            border:`1.5px solid ${card.urgents>0?card.color+"60":T.border}`,
+            borderRadius:18,padding:16,cursor:"pointer",
+            boxShadow:card.urgents>0?`0 4px 20px ${card.color}25`:`0 2px 8px rgba(0,0,0,0.2)`,
+            position:"relative",overflow:"hidden",
+          }}>
+            <div style={{position:"absolute",top:-20,right:-20,width:70,height:70,borderRadius:"50%",background:card.color+"10"}}/>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+              <span style={{fontSize:24}}>{card.icon}</span>
+              {card.urgents>0&&<Badge label={`🚨${card.urgents}`} color={T.rose}/>}
+            </div>
+            <div style={syne(14,T.text)}>{card.label}</div>
+            <div style={dm(12,T.textMid,400)}>
+              {card.label==="Today"?`${card.done||0}/${card.total||0} done`:`${card.open||0} open`}
+            </div>
+            {card.label==="Today"&&card.total>0&&(
+              <div style={{marginTop:8}}><Bar pct={(card.done||0)/card.total*100} color={card.color} h={5}/></div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Schedule */}
+      <GlowCard color={T.cyan} style={{marginBottom:16}}>
+        <SectionTitle icon="📅" title="Fixed Schedule" color={T.cyan}/>
+        {FIXED_SCHED.map((s,i)=>{
+          const now=new Date(),cm=now.getHours()*60+now.getMinutes();
+          const[sh,sm]=s.time.split(":").map(Number);
+          const[eh,em]=s.end.split(":").map(Number);
+          const isNow=cm>=sh*60+sm&&cm<eh*60+em;
+          return(
+            <div key={i} style={{
+              display:"flex",gap:12,alignItems:"center",
+              padding:"10px 12px",borderRadius:12,marginBottom:6,
+              background:isNow?s.color+"15":"transparent",
+              border:`1px solid ${isNow?s.color+"60":"transparent"}`,
+              boxShadow:isNow?`0 0 16px ${s.color}25`:"none",
+            }}>
+              <span style={{...mono(11,isNow?s.color:T.textMid),width:42,textAlign:"right",flexShrink:0,fontWeight:500}}>{s.time}</span>
+              <div style={{width:10,height:10,borderRadius:"50%",background:isNow?s.color:s.color+"40",border:`2px solid ${s.color}`,flexShrink:0,boxShadow:isNow?`0 0 8px ${s.color}`:"none"}}/>
+              <div style={{flex:1}}>
+                <span style={dm(13,isNow?T.text:T.textMid,isNow?600:400)}>{s.label}</span>
+                {isNow&&<span style={{...mono(9,s.color),marginLeft:8,background:s.color+"20",border:`1px solid ${s.color}40`,borderRadius:4,padding:"1px 6px",fontWeight:600}}>NOW</span>}
+              </div>
+            </div>
+          );
+        })}
+      </GlowCard>
+
+      {/* Quick Capture */}
+      <GlowCard color={T.violet}>
+        <SectionTitle icon="⚡" title="Quick Capture" color={T.violet}/>
+        <QuickAdd onAdd={addQuick} ph="Capture any thought, task or flag..." showPriority showNote/>
+        {quickItems.slice(0,5).map(item=>(
+          <div key={item.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 4px",borderBottom:`1px solid ${T.border}`}}>
+            <span style={dm(13,T.text)}>{item.text}</span>
+            <button onClick={()=>deleteQuick(item.id)} style={{background:"none",border:"none",color:T.textDim,cursor:"pointer",fontSize:18,padding:"0 4px"}}>×</button>
+          </div>
+        ))}
+        <SyncBtn items={dayItems} energy={null} focus={null} rating={null} review={null}/>
+      </GlowCard>
+    </div>
+  );
+}
+
+// ── DAY PLANNER ───────────────────────────────────────────────
+function Day(){
+  const[phase,setPhase]=useState("morning");
+  const[energy,setEnergy]=useState(()=>sGet(`sanil:energy:${dKey()}`)||7);
+  const[focus,setFocus]=useState(()=>sGet(`sanil:focus:${dKey()}`)||"");
+  const[rating,setRating]=useState(()=>sGet(`sanil:rating:${dKey()}`)||7);
+  const[review,setReview]=useState(()=>sGet(`sanil:review:${dKey()}`)||{done:"",pending:"",tomorrow:""});
+  const{items,addItem,toggleItem,deleteItem}=useItems(`sanil:day:${dKey()}`);
+  const[cat,setCat]=useState("hospital");
+  const catItems=items.filter(i=>i.cat===cat);
+  const done=items.filter(i=>i.done).length;
+  const pct=items.length?Math.round(done/items.length*100):0;
+  const energyColor=energy<=3?T.rose:energy<=6?T.amber:T.emerald;
+
+  return(
+    <div className="fade-in">
+      <ScrollTabs cats={[
+        {id:"morning",label:"Morning",icon:"🌅",color:T.amber,bg:T.amberD},
+        {id:"plan",label:"Day Plan",icon:"📋",color:T.cyan,bg:T.cyanD},
+        {id:"evening",label:"Evening",icon:"🌙",color:T.violet,bg:T.violetD},
+      ]} active={phase} onSelect={setPhase}/>
+
+      {phase==="morning"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <GlowCard color={energyColor}>
+            <SectionTitle icon="⚡" title="Energy Level" color={energyColor}/>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
+              {[1,2,3,4,5,6,7,8,9,10].map(n=>(
+                <button key={n} onClick={()=>{setEnergy(n);sSet(`sanil:energy:${dKey()}`,n);}} style={{
+                  width:46,height:46,borderRadius:12,cursor:"pointer",
+                  border:`2px solid ${energy===n?energyColor:T.border}`,
+                  background:energy===n?`linear-gradient(135deg,${energyColor},${energyColor}AA)`:T.surfaceHigh,
+                  ...syne(15,energy===n?"#fff":T.textMid),
+                  boxShadow:energy===n?`0 4px 14px ${energyColor}50`:"none",
+                }}>{n}</button>
+              ))}
+            </div>
+            <div style={{
+              padding:"10px 14px",borderRadius:12,
+              background:`${energyColor}15`,border:`1px solid ${energyColor}30`,
+              ...dm(13,energyColor,500),
+            }}>
+              {energy<=3?"🔴 Low — protect your 2–5pm rest window":energy<=6?"🟡 Moderate — pace yourself today":"🟢 Strong — great day for big decisions"}
+            </div>
+          </GlowCard>
+
+          <GlowCard color={T.cyan}>
+            <SectionTitle icon="🎯" title="One Focus Today" color={T.cyan}/>
+            <textarea value={focus} onChange={e=>setFocus(e.target.value)} onBlur={()=>sSet(`sanil:focus:${dKey()}`,focus)}
+              placeholder="The ONE thing that makes today a win..."
+              style={{
+                width:"100%",background:T.surfaceHigh,border:`1.5px solid ${T.border}`,
+                borderRadius:12,padding:"12px 14px",...dm(14,T.text),
+                outline:"none",resize:"none",height:84,lineHeight:1.6,display:"block",color:T.text,
+              }}/>
+          </GlowCard>
+
+          <GlowCard color={T.indigo}>
+            <SectionTitle icon="📅" title="Fixed Blocks Today" color={T.indigo}/>
+            {FIXED_SCHED.map((s,i)=>(
+              <div key={i} style={{display:"flex",gap:12,alignItems:"center",padding:"10px 0",borderBottom:i<FIXED_SCHED.length-1?`1px solid ${T.border}`:"none"}}>
+                <span style={{...mono(11,T.textMid),width:42,textAlign:"right",flexShrink:0}}>{s.time}</span>
+                <div style={{width:9,height:9,borderRadius:"50%",background:s.color,boxShadow:`0 0 6px ${s.color}`,flexShrink:0}}/>
+                <div>
+                  <div style={dm(13,T.text,500)}>{s.label}</div>
+                  <div style={dm(11,T.textMid)}>{s.sub}</div>
+                </div>
+              </div>
+            ))}
+          </GlowCard>
+
+          <button onClick={()=>setPhase("plan")} style={{
+            width:"100%",padding:17,
+            background:`linear-gradient(135deg,${T.cyan},${T.indigo})`,
+            border:"none",borderRadius:16,...syne(15,"#fff"),cursor:"pointer",
+            boxShadow:`0 6px 20px ${T.cyan}40`,
+          }}>Build Today's Plan →</button>
+        </div>
+      )}
+
+      {phase==="plan"&&(
+        <div>
+          {items.length>0&&(
+            <GlowCard color={pct>=80?T.emerald:pct>=50?T.amber:T.rose} style={{marginBottom:14}}>
+              <div style={{display:"flex",gap:8,marginBottom:12}}>
+                <BigStat value={done} label="Done" color={T.emerald} icon="✅"/>
+                <BigStat value={items.length-done} label="Left" color={T.rose} icon="⏳"/>
+                <BigStat value={`${pct}%`} label="Complete" color={T.indigo} icon="📊"/>
+              </div>
+              <Bar pct={pct} color={pct>=80?T.emerald:pct>=50?T.amber:T.rose} h={10}/>
+            </GlowCard>
+          )}
+
+          <GlowCard color={T.indigo} style={{marginBottom:14}}>
+            <SectionTitle icon="➕" title="Add Task" color={T.indigo}/>
+            <select value={cat} onChange={e=>setCat(e.target.value)} style={{
+              width:"100%",background:T.surfaceHigh,border:`1.5px solid ${T.border}`,
+              borderRadius:12,padding:"11px 14px",...dm(13,T.text),
+              outline:"none",cursor:"pointer",marginBottom:10,display:"block",color:T.text,
+            }}>
+              {DAY_CATS.map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+            </select>
+            <QuickAdd onAdd={item=>addItem({...item,cat})} ph="What needs to get done?" showPriority showDue showNote/>
+          </GlowCard>
+
+          <ScrollTabs cats={DAY_CATS} active={cat} onSelect={setCat}/>
+          <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty="No tasks yet — add one above"/>
+
+          <button onClick={()=>setPhase("evening")} style={{
+            width:"100%",marginTop:16,padding:17,
+            background:`linear-gradient(135deg,${T.violet},${T.pink})`,
+            border:"none",borderRadius:16,...syne(15,"#fff"),cursor:"pointer",
+            boxShadow:`0 6px 20px ${T.violet}40`,
+          }}>Evening Review →</button>
+        </div>
+      )}
+
+      {phase==="evening"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <GlowCard color={T.indigo}>
+            <SectionTitle icon="📊" title="Day Summary" color={T.indigo}/>
+            <div style={{display:"flex",gap:8,marginBottom:12}}>
+              <BigStat value={done} label="Done" color={T.emerald} icon="✅"/>
+              <BigStat value={items.length-done} label="Pending" color={T.rose} icon="⏳"/>
+              <BigStat value={items.length} label="Total" color={T.cyan} icon="📋"/>
+            </div>
+            <Bar pct={pct} color={pct>=80?T.emerald:pct>=50?T.amber:T.rose} h={10}/>
+            <div style={{...mono(12,pct>=80?T.emerald:pct>=50?T.amber:T.rose),marginTop:8,textAlign:"right",fontWeight:600}}>{pct}% COMPLETE</div>
+          </GlowCard>
+
+          <GlowCard color={T.amber}>
+            <SectionTitle icon="⭐" title="Rate Your Day" color={T.amber}/>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {[1,2,3,4,5,6,7,8,9,10].map(n=>(
+                <button key={n} onClick={()=>{setRating(n);sSet(`sanil:rating:${dKey()}`,n);}} style={{
+                  width:46,height:46,borderRadius:12,cursor:"pointer",
+                  border:`2px solid ${rating===n?T.amber:T.border}`,
+                  background:rating===n?`linear-gradient(135deg,${T.amber},${T.amberL})`:T.surfaceHigh,
+                  ...syne(15,rating===n?"#000":T.textMid),
+                  boxShadow:rating===n?`0 4px 14px ${T.amber}60`:"none",
+                }}>{n}</button>
+              ))}
+            </div>
+          </GlowCard>
+
+          {[
+            {key:"done",label:"✅ What did you complete?",ph:"Key wins today...",color:T.emerald},
+            {key:"pending",label:"⏳ What is still pending?",ph:"Carry to tomorrow...",color:T.rose},
+            {key:"tomorrow",label:"🎯 What MUST happen tomorrow?",ph:"Top priority...",color:T.cyan},
+          ].map(q=>(
+            <GlowCard key={q.key} color={q.color}>
+              <div style={{...dm(13,q.color,600),marginBottom:8}}>{q.label}</div>
+              <textarea value={review[q.key]} onChange={e=>{const r={...review,[q.key]:e.target.value};setReview(r);sSet(`sanil:review:${dKey()}`,r);}}
+                placeholder={q.ph}
+                style={{width:"100%",background:T.surfaceHigh,border:`1.5px solid ${T.border}`,borderRadius:12,padding:"11px 14px",...dm(13,T.text),outline:"none",resize:"none",height:72,lineHeight:1.6,display:"block",color:T.text}}/>
+            </GlowCard>
+          ))}
+          <SyncBtn items={items} energy={energy} focus={focus} rating={rating} review={review}/>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── HOSPITAL ──────────────────────────────────────────────────
+function Hospital(){
+  const[cat,setCat]=useState("meetings");
+  const{items,addItem,toggleItem,deleteItem}=useItems("sanil:hospital");
+  const catItems=items.filter(i=>i.subcat===cat);
+  const curCat=HOSP_CATS.find(c=>c.id===cat);
+  const urgents=items.filter(i=>i.priority==="urgent"&&!i.done).length;
+  const open=items.filter(i=>!i.done).length;
+  return(
+    <div className="fade-in">
+      {/* Header card */}
+      <GlowCard color={T.cyan} style={{marginBottom:16,background:`linear-gradient(135deg,${T.cyanD},${T.surface})`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div>
+            <div style={mono(10,T.cyan)}>NMC SPECIALTY HOSPITAL</div>
+            <div style={syne(20,T.text)}>Hospital<br/>Command</div>
+            <div style={dm(12,T.textMid)}>Al Ain Cluster · Medical Director</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{...syne(40,T.cyan),lineHeight:1}}>{open}</div>
+            <div style={dm(11,T.textMid)}>open items</div>
+            {urgents>0&&<div style={{marginTop:6}}><Badge label={`🚨 ${urgents} URGENT`} color={T.rose}/></div>}
+          </div>
+        </div>
+      </GlowCard>
+
+      {urgents>0&&(
+        <div style={{padding:"14px 16px",marginBottom:16,borderRadius:14,background:T.roseD,border:`2px solid ${T.rose}50`,display:"flex",gap:12,alignItems:"center"}}>
+          <span style={{fontSize:22,animation:"pulse 1.5s infinite"}}>🚨</span>
+          <span style={dm(14,T.roseL,600)}>{urgents} urgent item{urgents>1?"s":""} need action today</span>
+        </div>
+      )}
+
+      <ScrollTabs cats={HOSP_CATS} active={cat} onSelect={setCat}/>
+      <QuickAdd onAdd={item=>addItem({...item,subcat:cat})} ph={`Add to ${curCat?.label}...`} showPriority showDue={["meetings","actions","governance"].includes(cat)} showNote showMetric={cat==="kpi"}/>
+      <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty={`No ${curCat?.label} logged yet`}/>
+    </div>
+  );
+}
+
+// ── BUSINESS ──────────────────────────────────────────────────
+function Business(){
+  const[biz,setBiz]=useState("skewers");
+  const[cat,setCat]=useState("actions");
+  const{items,addItem,toggleItem,deleteItem}=useItems("sanil:business");
+  const curBiz=BUSINESSES.find(b=>b.id===biz);
+  const catItems=items.filter(i=>i.biz===biz&&i.subcat===cat);
+  const bizOpen=items.filter(i=>i.biz===biz&&!i.done).length;
+  const bizUrgent=items.filter(i=>i.biz===biz&&!i.done&&i.priority==="urgent").length;
+  return(
+    <div className="fade-in">
+      <div style={{...mono(10,T.amber),marginBottom:12,letterSpacing:2}}>YOUR 5 BUSINESSES</div>
+      <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:8,marginBottom:16,scrollbarWidth:"none"}}>
+        {BUSINESSES.map(b=>(
+          <button key={b.id} onClick={()=>{setBiz(b.id);setCat("actions");}} style={{
+            padding:"12px 14px",borderRadius:16,cursor:"pointer",flexShrink:0,
+            border:`2px solid ${biz===b.id?b.color:T.border}`,
+            background:biz===b.id?b.color+"18":T.surface,
+            display:"flex",flexDirection:"column",alignItems:"center",gap:6,
+            boxShadow:biz===b.id?`0 4px 16px ${b.color}30`:"none",
+            minWidth:80,
+          }}>
+            <span style={{fontSize:24}}>{b.icon}</span>
+            <span style={dm(10,biz===b.id?b.color:T.textMid,biz===b.id?700:400)}>{b.name.split(" ")[0]}</span>
+          </button>
+        ))}
+      </div>
+
+      <GlowCard color={curBiz?.color||T.amber} style={{marginBottom:16,background:`linear-gradient(135deg,${curBiz?.bg||T.amberD},${T.surface})`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div>
+            <div style={syne(20,T.text)}>{curBiz?.icon} {curBiz?.name}</div>
+            <div style={dm(12,T.textMid)}>{curBiz?.sub}</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{...syne(42,curBiz?.color||T.amber),lineHeight:1}}>{bizOpen}</div>
+            <div style={dm(11,T.textMid)}>open items</div>
+            {bizUrgent>0&&<div style={{marginTop:4}}><Badge label={`🚨 ${bizUrgent}`} color={T.rose}/></div>}
+          </div>
+        </div>
+      </GlowCard>
+
+      <ScrollTabs cats={BIZ_CATS} active={cat} onSelect={setCat}/>
+      <QuickAdd onAdd={item=>addItem({...item,biz,subcat:cat})} ph={`Add to ${curBiz?.name}...`} showPriority showDue showNote/>
+      <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty="Nothing logged yet — add your first item"/>
+    </div>
+  );
+}
+
+// ── FINANCE ───────────────────────────────────────────────────
+function Finance(){
+  const[cat,setCat]=useState("income");
+  const{items,addItem,toggleItem,deleteItem}=useItems("sanil:finance");
+  const catItems=items.filter(i=>i.subcat===cat);
+  return(
+    <div className="fade-in">
+      <GlowCard color={T.emerald} style={{marginBottom:16,background:`linear-gradient(135deg,${T.emeraldD},${T.surface})`}}>
+        <div style={mono(10,T.emerald)}>FINANCIAL OVERVIEW</div>
+        <div style={syne(22,T.text)}>Finance Log</div>
+        <div style={dm(12,T.textMid)}>Track income, expenses, biz revenue & goals</div>
+      </GlowCard>
+      <ScrollTabs cats={FIN_CATS} active={cat} onSelect={setCat}/>
+      <QuickAdd onAdd={item=>addItem({...item,subcat:cat})}
+        ph={cat==="income"?"e.g. NMC Salary — AED 55,000":cat==="expenses"?"e.g. School fees — AED 8,000":cat==="biz"?"e.g. Skewers revenue — AED 120,000":"e.g. Emergency fund target — AED 200,000"}
+        showPriority={false} showDue showNote showMetric/>
+      <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty="Start logging your finances here"/>
+    </div>
+  );
+}
+
+// ── PERSONAL ──────────────────────────────────────────────────
+function Personal(){
+  const[cat,setCat]=useState("family");
+  const{items,addItem,toggleItem,deleteItem}=useItems("sanil:personal");
+  const[scores,setScores]=useState(()=>sGet("sanil:scorecard")||{});
+  const catItems=items.filter(i=>i.subcat===cat);
+  const cornellItems=items.filter(i=>i.subcat==="cornell");
+  const cornellDone=cornellItems.filter(i=>i.done).length;
+  function setScore(area,val){const s={...scores,[area]:val};setScores(s);sSet("sanil:scorecard",s);}
+
+  return(
+    <div className="fade-in">
+      <ScrollTabs cats={PERS_CATS} active={cat} onSelect={setCat}/>
+
+      {cat==="family"&&(
+        <div>
+          <GlowCard color={T.pink} style={{marginBottom:14}}>
+            <SectionTitle icon="👨‍👩‍👧" title="Family" color={T.pink}/>
+            {["Wife","Child 1","Child 2","Child 3","Mother-in-law"].map((m,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:i<4?`1px solid ${T.border}`:"none"}}>
+                <span style={dm(14,T.text,500)}>{m}</span>
+                <Badge label="Log below" color={T.pink} size={9}/>
+              </div>
+            ))}
+          </GlowCard>
+          <QuickAdd onAdd={item=>addItem({...item,subcat:cat})} ph="Family note, event or action..." showPriority showDue showNote/>
+          <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty="No family items logged"/>
+        </div>
+      )}
+
+      {cat==="cornell"&&(
+        <div>
+          <GlowCard color={T.rose} style={{marginBottom:14,background:`linear-gradient(135deg,${T.roseD},${T.surface})`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+              <div>
+                <div style={mono(9,T.rose)}>ENROLLED · NOT STARTED</div>
+                <div style={syne(18,T.text)}>Cornell Healthcare<br/>Leadership</div>
+              </div>
+              <Badge label={cornellDone>0?"IN PROGRESS":"ACTION NEEDED"} color={cornellDone>0?T.amber:T.rose}/>
+            </div>
+            <Bar pct={cornellItems.length?cornellDone/cornellItems.length*100:0} color={T.rose} h={8}/>
+            <div style={{...dm(12,T.textMid),marginTop:8}}>{cornellDone}/{cornellItems.length} modules</div>
+            <div style={{marginTop:12,padding:"10px 12px",background:T.roseD,borderRadius:10,border:`1px solid ${T.rose}40`,...dm(13,T.roseL,500)}}>
+              ⚡ Next: Log in → confirm start date → block 1hr/week in Outlook
+            </div>
+          </GlowCard>
+          <QuickAdd onAdd={item=>addItem({...item,subcat:cat})} ph="Module, deadline or study task..." showPriority showDue showNote/>
+          <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty="Add Cornell modules and deadlines"/>
+        </div>
+      )}
+
+      {cat==="hobbies"&&(
+        <div>
+          <GlowCard color={T.violet} style={{marginBottom:14}}>
+            <SectionTitle icon="🎧" title="Recharge Activities" color={T.violet}/>
+            {[{icon:"🎛️",name:"DJing",note:"Schedule your next session"},{icon:"✈️",name:"Travel",note:"Plan your next trip"},{icon:"🎵",name:"Music",note:"Daily recharge — protect it"}].map((h,i)=>(
+              <div key={i} style={{display:"flex",gap:14,alignItems:"center",padding:"12px 0",borderBottom:i<2?`1px solid ${T.border}`:"none"}}>
+                <div style={{width:44,height:44,borderRadius:12,background:T.violetD,border:`1px solid ${T.violet}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{h.icon}</div>
+                <div><div style={dm(14,T.text,600)}>{h.name}</div><div style={dm(12,T.textMid)}>{h.note}</div></div>
+              </div>
+            ))}
+          </GlowCard>
+          <QuickAdd onAdd={item=>addItem({...item,subcat:cat})} ph="Hobby plan, booking or reminder..." showPriority showDue/>
+          <ItemList items={catItems} onToggle={toggleItem} onDelete={deleteItem} empty="No hobby items logged"/>
+        </div>
+      )}
+
+      {cat==="scorecard"&&(
+        <GlowCard color={T.amber}>
+          <SectionTitle icon="⭐" title="Monthly Life Scorecard" color={T.amber}/>
+          <div style={{...dm(12,T.textMid),marginBottom:20}}>Rate each life area 1–10. Review monthly. Spot what's slipping.</div>
+          {LIFE_AREAS.map(area=>{
+            const val=scores[area]||0;
+            const color=val>=8?T.emerald:val>=5?T.amber:val>=1?T.rose:T.textDim;
+            return(
+              <div key={area} style={{marginBottom:18}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <span style={dm(13,T.text,600)}>{area}</span>
+                  <div style={{display:"flex",gap:4}}>
+                    {[1,2,3,4,5,6,7,8,9,10].map(n=>(
+                      <button key={n} onClick={()=>setScore(area,n)} style={{
+                        width:26,height:26,borderRadius:6,cursor:"pointer",padding:0,
+                        border:`1.5px solid ${val===n?color:T.border}`,
+                        background:val===n?`linear-gradient(135deg,${color},${color}AA)`:T.surfaceHigh,
+                        ...dm(10,val===n?"#fff":T.textDim,700),
+                        boxShadow:val===n?`0 2px 8px ${color}50`:"none",
+                      }}>{n}</button>
+                    ))}
+                  </div>
+                </div>
+                <Bar pct={val*10} color={color} h={6}/>
+              </div>
+            );
+          })}
+          <div style={{marginTop:16,padding:"14px",background:T.amberD,borderRadius:14,border:`1px solid ${T.amber}40`,textAlign:"center"}}>
+            <div style={mono(10,T.amber)}>AVERAGE SCORE</div>
+            <div style={{...syne(32,T.amber),marginTop:4}}>{LIFE_AREAS.filter(a=>scores[a]).length?Math.round(LIFE_AREAS.reduce((s,a)=>s+(scores[a]||0),0)/LIFE_AREAS.filter(a=>scores[a]).length*10)/10:"—"}<span style={syne(16,T.textMid)}>/10</span></div>
+          </div>
+        </GlowCard>
+      )}
+    </div>
+  );
+}
+
+// ── APP SHELL ─────────────────────────────────────────────────
+function App(){
+  const[tab,setTab]=useState("home");
+  const[isMobile,setIsMobile]=useState(window.innerWidth<768);
+  const{items:hospItems}=useItems("sanil:hospital");
+  const{items:bizItems}=useItems("sanil:business");
+  const{items:dayItems}=useItems(`sanil:day:${dKey()}`);
+  const{items:finItems}=useItems("sanil:finance");
+  const{items:persItems}=useItems("sanil:personal");
+  const{items:quickItems,addItem:addQuick,deleteItem:deleteQuick}=useItems("sanil:quick");
+  useEffect(()=>{const fn=()=>setIsMobile(window.innerWidth<768);window.addEventListener("resize",fn);return()=>window.removeEventListener("resize",fn);},[]);
+  const all={hospItems,bizItems,dayItems,finItems,persItems,quickItems,addQuick,deleteQuick,setTab};
+  const activeNav=NAV.find(n=>n.id===tab);
+
+  return(
+    <div style={{minHeight:"100vh",background:T.bg,color:T.text,fontFamily:"'DM Sans',sans-serif",paddingBottom:isMobile?88:0}}>
+      {/* Background glow */}
+      <div style={{position:"fixed",top:-100,left:-100,width:300,height:300,borderRadius:"50%",background:`radial-gradient(circle,${T.indigo}15,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
+      <div style={{position:"fixed",bottom:-100,right:-100,width:300,height:300,borderRadius:"50%",background:`radial-gradient(circle,${T.cyan}10,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
+
+      {/* HEADER */}
+      <div style={{
+        padding:`${isMobile?"14px 16px":"16px 28px"}`,
+        background:"rgba(13,17,23,0.92)",
+        borderBottom:`1px solid ${T.border}`,
+        display:"flex",justifyContent:"space-between",alignItems:"center",
+        position:"sticky",top:0,zIndex:100,backdropFilter:"blur(16px)",
+      }}>
+        <div>
+          <div style={syne(isMobile?17:20,T.text)}>Dr. Sanil OS</div>
+          <div style={mono(9,activeNav?.color||T.textMid)}>{activeNav?.label?.toUpperCase()} · AL AIN, UAE</div>
+        </div>
+        <Clock/>
+      </div>
+
+      {/* DESKTOP NAV */}
+      {!isMobile&&(
+        <div style={{display:"flex",borderBottom:`1px solid ${T.border}`,padding:"0 28px",background:"rgba(22,27,34,0.95)"}}>
+          {NAV.map(n=>(
+            <button key={n.id} onClick={()=>setTab(n.id)} style={{
+              padding:"13px 18px",background:"none",border:"none",cursor:"pointer",
+              ...dm(12,tab===n.id?n.color:T.textMid,tab===n.id?700:400),
+              borderBottom:tab===n.id?`3px solid ${n.color}`:"3px solid transparent",
+              marginBottom:-1,letterSpacing:0.3,
+            }}>{n.icon} {n.label}</button>
+          ))}
+        </div>
+      )}
+
+      {/* CONTENT */}
+      <div style={{padding:isMobile?"16px":"24px 28px",maxWidth:960,margin:"0 auto",position:"relative",zIndex:1}}>
+        {tab==="home"&&<Home all={all}/>}
+        {tab==="day"&&<Day/>}
+        {tab==="hospital"&&<Hospital/>}
+        {tab==="business"&&<Business/>}
+        {tab==="finance"&&<Finance/>}
+        {tab==="personal"&&<Personal/>}
+      </div>
+
+      {/* MOBILE NAV */}
+      {isMobile&&(
+        <div style={{
+          position:"fixed",bottom:0,left:0,right:0,
+          background:"rgba(13,17,23,0.97)",
+          borderTop:`1px solid ${T.border}`,
+          display:"flex",zIndex:200,
+          paddingBottom:"env(safe-area-inset-bottom)",
+          backdropFilter:"blur(20px)",
+          boxShadow:`0 -4px 24px rgba(0,0,0,0.4)`,
+        }}>
+          {NAV.map(n=>{
+            const a=tab===n.id;
+            return(
+              <button key={n.id} onClick={()=>setTab(n.id)} style={{
+                flex:1,display:"flex",flexDirection:"column",alignItems:"center",
+                padding:"10px 4px 8px",background:"none",border:"none",cursor:"pointer",gap:4,
+                position:"relative",
+              }}>
+                {a&&<div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:40,height:3,background:`linear-gradient(90deg,${n.color},${n.color}AA)`,borderRadius:"0 0 4px 4px",boxShadow:`0 2px 8px ${n.color}80`}}/>}
+                <span style={{fontSize:20,opacity:a?1:0.35,filter:a?`drop-shadow(0 0 6px ${n.color})`:"none"}}>{n.icon}</span>
+                <span style={{...dm(9,a?n.color:T.textDim,a?700:400)}}>{n.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
